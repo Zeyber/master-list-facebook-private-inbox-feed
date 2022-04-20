@@ -1,2 +1,1 @@
-export * from "./FacebookProvider";
-export * from "./facebook.utils";
+export * from "./src/index";

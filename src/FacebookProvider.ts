@@ -1,4 +1,4 @@
-import { ProviderOptions, PuppeteerProvider } from "master-list";
+import { ProviderOptions, PuppeteerProvider } from "@master-list/core";
 import fs = require("fs");
 import { loginWithFacebook } from "./facebook.utils";
 
