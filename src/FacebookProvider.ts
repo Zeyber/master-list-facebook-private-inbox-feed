@@ -1,10 +1,11 @@
-import { ProviderOptions, PuppeteerProvider } from "@master-list/core";
+import { ProviderOptions, PuppeteerProvider } from "../../core/index";
 import fs = require("fs");
 import { loginWithFacebook } from "./facebook.utils";
 
 export interface FacebookOptions extends ProviderOptions {
   email: string;
   password: string;
+  scrollChatsCount?: number;
 }
 
 export const defaultOptions: ProviderOptions = {
@@ -22,6 +23,10 @@ export class FacebookProvider extends PuppeteerProvider {
   initialize(): Promise<boolean> {
     return super.initialize(async () => {
       await this.login();
+
+      for (let i = 0; i < this.options.scrollChatsCount; i++) {
+        await this.scrollToChatsBottom();
+      }
     });
   }
 
@@ -44,6 +49,12 @@ export class FacebookProvider extends PuppeteerProvider {
           await this.page.goto("https://facebook.com/messages/t/", {
             waitUntil: ["load", "networkidle2"],
           });
+
+          await this.page.waitForSelector('[aria-valuetext="Loading..."]', {
+            hidden: true,
+          });
+
+          await this.page.waitForTimeout(5000);
 
           resolve(true);
         })();
@@ -80,6 +91,39 @@ export class FacebookProvider extends PuppeteerProvider {
           reject(e);
         }
       })();
+    });
+  }
+
+  async scrollToChatsBottom(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const threadList = await this.page.waitForSelector(
+          '[aria-label="Chats"]'
+        );
+        const threads = await threadList.$$('[role="row"]');
+        if (threads.length) {
+          await this.page.evaluate(
+            (el) => el.scrollIntoView(),
+            threads[threads.length - 1]
+          );
+
+          await this.page.waitForSelector('[aria-valuetext="Loading..."]', {
+            timeout: 10000,
+          });
+
+          await this.page.waitForTimeout(1000);
+
+          await this.page.waitForSelector('[aria-valuetext="Loading..."]', {
+            hidden: true,
+          });
+
+          await this.page.waitForTimeout(1000);
+        }
+      } catch (e) {
+        reject(e);
+      }
+
+      resolve();
     });
   }
 }
