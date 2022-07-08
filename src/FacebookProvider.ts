@@ -4,6 +4,9 @@ import { loginWithFacebook } from "./facebook.utils";
 export interface FacebookOptions extends ProviderOptions {
   email: string;
   password: string;
+  /**
+   * Scroll message threads this number of times to load more threads.
+   */
   scrollChatsCount?: number;
 }
 
@@ -93,6 +96,9 @@ export class FacebookProvider extends PuppeteerProvider {
     });
   }
 
+  /**
+   * Scoll to bottom of threads list in DOM to load more threads.
+   */
   async scrollToChatsBottom(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
