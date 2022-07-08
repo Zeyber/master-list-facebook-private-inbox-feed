@@ -1,5 +1,4 @@
-import { ProviderOptions, PuppeteerProvider } from "../../core/index";
-import fs = require("fs");
+import { ProviderOptions, PuppeteerProvider } from "@master-list/core";
 import { loginWithFacebook } from "./facebook.utils";
 
 export interface FacebookOptions extends ProviderOptions {

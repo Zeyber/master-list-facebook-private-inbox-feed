@@ -1,9 +1,7 @@
-import { Page } from "puppeteer";
-
 import fs = require("fs");
 
 export interface FacebookLoginOptions {
-  page: Page;
+  page: any;
   email: string;
   password: string;
   preserveCookies?: boolean;
