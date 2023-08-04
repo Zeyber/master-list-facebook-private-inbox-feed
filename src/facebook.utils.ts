@@ -1,4 +1,4 @@
-import fs = require("fs");
+import fs = require('fs');
 
 export interface FacebookLoginOptions {
   page: any;
@@ -8,12 +8,12 @@ export interface FacebookLoginOptions {
 }
 
 export async function loginWithFacebook(options: FacebookLoginOptions) {
-  await options.page.goto("https://facebook.com/login", {
-    waitUntil: ["load", "networkidle2"],
+  await options.page.goto('https://facebook.com/login', {
+    waitUntil: ['load', 'networkidle2'],
   });
 
   const cookieBanner = await options.page.waitForSelector(
-    '[data-cookiebanner="accept_only_essential_button"]'
+    '[data-cookiebanner="accept_only_essential_button"]',
   );
   await cookieBanner.click();
 
@@ -36,13 +36,13 @@ export async function loginWithFacebook(options: FacebookLoginOptions) {
       // save your cookies to a file or use them in your code using fs.writeFileSync(...)
 
       cookies.forEach((cookie) => {
-        delete Object.assign(cookie, { ["key"]: cookie["name"] })["name"];
+        delete Object.assign(cookie, { ['key']: cookie['name'] })['name'];
       });
 
       // State is not actually used but might be nice to have handy in future.
       fs.writeFileSync(
-        ".credentials/facebook-state.json",
-        JSON.stringify(cookies)
+        '.credentials/facebook-state.json',
+        JSON.stringify(cookies),
       );
     }
   });
