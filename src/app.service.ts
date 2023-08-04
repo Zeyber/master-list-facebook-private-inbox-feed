@@ -1,41 +1,58 @@
-import { ProviderOptions, PuppeteerProvider } from "@master-list/core";
-import { loginWithFacebook } from "./facebook.utils";
+import { Injectable } from '@nestjs/common';
+import { Browser, Page } from 'puppeteer';
+import { loginWithFacebook } from './facebook.utils';
+import { getBrowser } from './puppeteer.utils';
 
-export interface FacebookOptions extends ProviderOptions {
+export interface FacebookOptions {
   email: string;
   password: string;
   /**
    * Scroll message threads this number of times to load more threads.
    */
   scrollChatsCount?: number;
+  /**
+   *  Puppeteer Browser instance to be used. Creates a new Browser if empty.
+   */
+  browser?: Browser;
 }
 
-export const defaultOptions: ProviderOptions = {
-  providerName: "Facebook",
+export const defaultOptions: FacebookOptions = {
+  email: process.env.FACEBOOK_EMAIL,
+  password: process.env.FACEBOOK_PASSWORD,
+  scrollChatsCount: 10,
 };
 
-export class FacebookProvider extends PuppeteerProvider {
-  constructor(public options: FacebookOptions) {
-    super({
-      ...defaultOptions,
-      ...options,
-    });
+const ICON_PATH = '/assets/icon.png';
+
+@Injectable()
+export class AppService {
+  options = {
+    email: process.env.FACEBOOK_EMAIL,
+    password: process.env.FACEBOOK_PASSWORD,
+    scrollChatsCount: 10,
+  };
+  browser: Browser;
+  page: Page;
+
+  async initialize() {
+    // this.browser = this.options?.browser || (await getBrowser());
+    this.browser = await getBrowser();
+    this.page = await this.browser.newPage();
+
+    // Disable timeout for slower devices
+    this.page.setDefaultNavigationTimeout(0);
+    this.page.setDefaultTimeout(0);
+    await this.login();
+
+    for (let i = 0; i < this.options.scrollChatsCount; i++) {
+      await this.scrollToChatsBottom();
+    }
+
+    console.log('Facebook initialized.');
   }
 
-  initialize(): Promise<boolean> {
-    return super.initialize(async () => {
-      await this.login();
-
-      for (let i = 0; i < this.options.scrollChatsCount; i++) {
-        await this.scrollToChatsBottom();
-      }
-    });
-  }
-
-  reload() {
-    return super.reload(async () => {
-      return await this.getChats();
-    });
+  getData() {
+    return this.getChats();
   }
 
   async login() {
@@ -48,8 +65,8 @@ export class FacebookProvider extends PuppeteerProvider {
             password: this.options.password,
           });
 
-          await this.page.goto("https://facebook.com/messages/t/", {
-            waitUntil: ["load", "networkidle2"],
+          await this.page.goto('https://facebook.com/messages/t/', {
+            waitUntil: ['load', 'networkidle2'],
           });
 
           await this.page.waitForSelector('[aria-valuetext="Loading..."]', {
@@ -66,12 +83,12 @@ export class FacebookProvider extends PuppeteerProvider {
     });
   }
 
-  async getChats(): Promise<string[]> {
+  async getChats(): Promise<any> {
     return new Promise(async (resolve, reject) => {
       await (async () => {
         try {
           const threadList = await this.page.waitForSelector(
-            '[aria-label="Chats"]'
+            '[aria-label="Chats"]',
           );
           const threads = await threadList.$$('[role="row"]');
           if (threads.length) {
@@ -81,13 +98,13 @@ export class FacebookProvider extends PuppeteerProvider {
               if (unread) {
                 const threadText: string = await this.page.evaluate(
                   (el) => el.innerText,
-                  thread
+                  thread,
                 );
-                const name = threadText.split("\n")[0];
-                items.push(name);
+                const name = threadText.split('\n')[0];
+                items.push({ message: name, icon: ICON_PATH });
               }
             }
-            resolve(items);
+            resolve({ data: items });
           }
         } catch (e) {
           reject(e);
@@ -103,13 +120,13 @@ export class FacebookProvider extends PuppeteerProvider {
     return new Promise(async (resolve, reject) => {
       try {
         const threadList = await this.page.waitForSelector(
-          '[aria-label="Chats"]'
+          '[aria-label="Chats"]',
         );
         const threads = await threadList.$$('[role="row"]');
         if (threads.length) {
           await this.page.evaluate(
             (el) => el.scrollIntoView(),
-            threads[threads.length - 1]
+            threads[threads.length - 1],
           );
 
           await this.page.waitForSelector('[aria-valuetext="Loading..."]', {
