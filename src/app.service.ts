@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Browser, Page } from 'puppeteer';
 import { loginWithFacebook } from './facebook.utils';
 import { getBrowser } from './puppeteer.utils';
+import { of } from 'rxjs';
 
 export interface FacebookOptions {
   email: string;
@@ -33,6 +34,7 @@ export class AppService {
   };
   browser: Browser;
   page: Page;
+  initialized = false;
 
   async initialize() {
     // this.browser = this.options?.browser || (await getBrowser());
@@ -48,11 +50,19 @@ export class AppService {
       await this.scrollToChatsBottom();
     }
 
+    this.initialized = true;
+
     console.log('Facebook initialized.');
   }
 
   getData() {
-    return this.getChats();
+    if (this.initialized) {
+      return this.getChats();
+    } else {
+      return of({
+        data: [{ message: 'Facebook feed not initialized', icon: ICON_PATH }],
+      });
+    }
   }
 
   async login() {
