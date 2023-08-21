@@ -75,7 +75,7 @@ export class AppService {
             password: this.options.password,
           });
 
-          await this.page.goto('https://facebook.com/messages/t/', {
+          await this.page.goto('https://facebook.com/messages/new', {
             waitUntil: ['load', 'networkidle2'],
           });
 
