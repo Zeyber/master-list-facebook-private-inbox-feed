@@ -38,21 +38,27 @@ export class AppService {
 
   async initialize() {
     // this.browser = this.options?.browser || (await getBrowser());
+    this.initialized = false;
     this.browser = await getBrowser();
     this.page = await this.browser.newPage();
 
     // Disable timeout for slower devices
     this.page.setDefaultNavigationTimeout(0);
     this.page.setDefaultTimeout(0);
-    await this.login();
 
-    for (let i = 0; i < this.options.scrollChatsCount; i++) {
-      await this.scrollToChatsBottom();
+    const loggedIn = await this.login();
+    if (loggedIn) {
+      for (let i = 0; i < this.options.scrollChatsCount; i++) {
+        await this.scrollToChatsBottom();
+      }
+
+      this.initialized = true;
+
+      console.log('Facebook initialized.');
+      return;
     }
 
-    this.initialized = true;
-
-    console.log('Facebook initialized.');
+    this.reinitialize();
   }
 
   getData() {
@@ -88,7 +94,9 @@ export class AppService {
           resolve(true);
         })();
       } catch (e) {
-        reject(e);
+        console.error(e);
+        this.reinitialize();
+        reject(false);
       }
     });
   }
@@ -117,7 +125,16 @@ export class AppService {
             resolve({ data: items });
           }
         } catch (e) {
-          reject(e);
+          console.error(e);
+          this.reinitialize();
+          resolve({
+            data: [
+              {
+                message: 'Critical error occurred. Reinitializing...',
+                icon: ICON_PATH,
+              },
+            ],
+          });
         }
       })();
     });
@@ -157,5 +174,12 @@ export class AppService {
 
       resolve();
     });
+  }
+
+  reinitialize() {
+    this.initialized = false;
+    this.browser?.close();
+    console.log('Reinitializing in 30 seconds...');
+    setTimeout(() => this.initialize(), 30000);
   }
 }
