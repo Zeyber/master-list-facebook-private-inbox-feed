@@ -1,7 +1,7 @@
 {
-  "name": "@zeyber/master-list-facebook-provider",
-  "version": "0.2.2",
-  "description": "Master List Feed for Facebook Unread Messages",
+  "name": "@zeyber/master-list-facebook-private-inbox-feed",
+  "version": "0.2.3",
+  "description": "Master List Feed for Facebook Private Unread Inbox Messages",
   "author": "Caine Rotherham",
   "scripts": {
     "build": "nest build",
